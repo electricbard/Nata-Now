@@ -11,6 +11,7 @@ final class CompassViewModel: ObservableObject {
     @Published var isNearArrival = false
     @Published var hasSearched = false
     @Published var tappedLocation: NataLocation?
+    @Published var isLaunching = true
 
     let locationManager = LocationManager()
     let searchService = NataSearchService()
@@ -21,6 +22,12 @@ final class CompassViewModel: ObservableObject {
 
     init() {
         setupBindings()
+        // Launch screen for 3 seconds
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.isLaunching = false
+            }
+        }
     }
 
     private func setupBindings() {

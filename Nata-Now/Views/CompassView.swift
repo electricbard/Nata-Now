@@ -4,18 +4,31 @@ struct CompassView: View {
     @ObservedObject var viewModel: CompassViewModel
 
     var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            if viewModel.isLaunching {
+                LaunchScreen()
+            } else {
+                compassContent
+            }
+        }
+        .ignoresSafeArea()
+        .preferredColorScheme(.dark)
+        .statusBarHidden()
+    }
+
+    private var compassContent: some View {
         GeometryReader { geometry in
             let size = min(geometry.size.width, geometry.size.height)
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
-            let radius = size / 2 - 36 // Margin for icons on the dial
+            let radius = size / 2 - 36
 
             ZStack {
-                Color.black.ignoresSafeArea()
-
                 CompassDial(
                     heading: viewModel.heading,
                     locations: viewModel.locations,
-                    highlightedID: viewModel.highlightedLocation?.id,
+                    highlightedID: viewModel.tappedLocation?.id ?? viewModel.highlightedLocation?.id,
                     nearestID: viewModel.nearestLocation?.id,
                     radius: radius
                 )
@@ -28,9 +41,6 @@ struct CompassView: View {
                 handleTap(at: tapLocation, center: center, radius: radius)
             }
         }
-        .ignoresSafeArea()
-        .preferredColorScheme(.dark)
-        .statusBarHidden()
     }
 
     private func handleTap(at point: CGPoint, center: CGPoint, radius: CGFloat) {
@@ -56,14 +66,35 @@ struct CompassView: View {
     }
 }
 
+// MARK: - Launch Screen
+
+struct LaunchScreen: View {
+    @State private var isPulsing = false
+
+    var body: some View {
+        Text("🔮")
+            .font(.system(size: 120))
+            .scaleEffect(isPulsing ? 1.15 : 1.0)
+            .animation(
+                .easeInOut(duration: 0.6)
+                .repeatForever(autoreverses: true),
+                value: isPulsing
+            )
+            .onAppear { isPulsing = true }
+    }
+}
+
 // MARK: - Compass Dial (Canvas)
 
 struct CompassDial: View {
     let heading: Double
     let locations: [NataLocation]
-    let highlightedID: UUID?   // Facing — white ring
-    let nearestID: UUID?       // Nearest — orange-red ring
+    let highlightedID: UUID?   // Facing or tapped — shown at 100%
+    let nearestID: UUID?       // Nearest — orange-red dot
     let radius: CGFloat
+
+    private let fullIconSize: CGFloat = 48
+    private let fullEmojiSize: CGFloat = 32
 
     var body: some View {
         Canvas { context, size in
@@ -95,7 +126,6 @@ struct CompassDial: View {
 
                 if isNorth {
                     context.stroke(path, with: .color(.red), lineWidth: 4)
-
                     let labelPoint = pointOnCircle(center: center, radius: radius - 36, angle: tickAngle)
                     let text = Text("N").font(.system(size: 20, weight: .bold)).foregroundColor(.red)
                     context.draw(context.resolve(text), at: labelPoint)
@@ -105,32 +135,25 @@ struct CompassDial: View {
             }
 
             // Draw location markers on the dial circumference
-            let iconSize: CGFloat = 48
             for location in locations {
                 let markerAngle = Angle.degrees(location.bearing) + rotation
                 let markerCenter = pointOnCircle(center: center, radius: radius, angle: markerAngle)
-                let isFacing = location.id == highlightedID
+                let isHighlighted = location.id == highlightedID
                 let isNearest = location.id == nearestID
 
-                // Orange-red for nearest, white for facing-only. If both, orange-red wins.
+                let scale: CGFloat = isHighlighted ? 1.0 : 0.75
+                let iconSize = fullIconSize * scale
+                let emojiSize = fullEmojiSize * scale
+
+                // Orange-red dot at fixed inner radius for nearest location
                 if isNearest {
-                    let ringPath = Path(ellipseIn: CGRect(
-                        x: markerCenter.x - iconSize / 2 - 6,
-                        y: markerCenter.y - iconSize / 2 - 6,
-                        width: iconSize + 12,
-                        height: iconSize + 12
-                    ))
-                    context.stroke(ringPath, with: .color(Color(red: 1.0, green: 0.35, blue: 0.1)), lineWidth: 3)
-                } else if isFacing {
-                    let ringPath = Path(ellipseIn: CGRect(
-                        x: markerCenter.x - iconSize / 2 - 6,
-                        y: markerCenter.y - iconSize / 2 - 6,
-                        width: iconSize + 12,
-                        height: iconSize + 12
-                    ))
-                    context.stroke(ringPath, with: .color(.white), lineWidth: 3)
+                    let dotRadius = radius - fullIconSize / 2 - 12
+                    let dotCenter = pointOnCircle(center: center, radius: dotRadius, angle: markerAngle)
+                    let dotRect = CGRect(x: dotCenter.x - 5, y: dotCenter.y - 5, width: 10, height: 10)
+                    context.fill(Path(ellipseIn: dotRect), with: .color(Color(red: 1.0, green: 0.35, blue: 0.1)))
                 }
 
+                // Icon background circle
                 let bgRect = CGRect(
                     x: markerCenter.x - iconSize / 2,
                     y: markerCenter.y - iconSize / 2,
@@ -139,8 +162,9 @@ struct CompassDial: View {
                 )
                 context.fill(Path(ellipseIn: bgRect), with: .color(.black))
 
+                // Emoji
                 let emoji = location.tier == .nata ? "🥧" : "☕"
-                let emojiText = Text(emoji).font(.system(size: 32))
+                let emojiText = Text(emoji).font(.system(size: emojiSize))
                 context.draw(context.resolve(emojiText), at: markerCenter)
             }
         }
@@ -161,22 +185,24 @@ struct CompassDial: View {
 struct CentreContent: View {
     @ObservedObject var viewModel: CompassViewModel
 
+    private var displayLocation: NataLocation? {
+        viewModel.tappedLocation ?? viewModel.highlightedLocation
+    }
+
     var body: some View {
         Group {
-            if let tapped = viewModel.tappedLocation {
+            if viewModel.isNearArrival, let location = viewModel.highlightedLocation {
+                NearArrivalView(tier: location.tier)
+            } else if let location = displayLocation {
                 VStack(spacing: 8) {
-                    Text(tapped.name)
+                    Text(location.name)
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 220)
-                    DistanceReadout(distance: tapped.distance)
+                    DistanceReadout(distance: location.distance)
                 }
-            } else if viewModel.isNearArrival, let location = viewModel.highlightedLocation {
-                NearArrivalView(tier: location.tier)
-            } else if let location = viewModel.highlightedLocation {
-                DistanceReadout(distance: location.distance)
             } else if viewModel.hasSearched {
                 Text("😢")
                     .font(.system(size: 64))

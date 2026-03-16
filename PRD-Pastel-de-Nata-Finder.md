@@ -58,6 +58,13 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 
 ### P0 — Must Have
 
+#### Launch Screen
+
+- On app launch, a **🔮 crystal ball emoji** is displayed centred on a black background.
+- The emoji **pulses** (scale 1.0 → 1.15, 0.6s cycle) to convey that the app is "sensing" nearby locations.
+- The launch screen **persists for 3 seconds** before transitioning to the compass dial.
+- **Acceptance criteria:** Launch screen appears immediately on app open and transitions to the compass after exactly 3 seconds.
+
 #### Compass Dial
 
 - **The dial fills the available screen space** (edge-to-edge on iPhone; full display on Apple Watch).
@@ -80,11 +87,9 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 
 - Up to **6 locations** (the closest by distance) are shown on the dial simultaneously. Each is represented by an icon placed at the bearing corresponding to that location from the user's current position: a **Pastel de Nata image** for confirmed nata-serving locations, or an **espresso cup image** for fuzzier café/patisserie matches.
 - **Icons occlude ticks** — any tick mark that would visually overlap with or sit within 5° of an icon is hidden, preventing clutter.
-- **Two highlight rings** distinguish facing and proximity:
-  - The **closest location by distance** (nearest) is indicated with an **orange-red ring** around its icon. This ring is always visible regardless of device orientation.
-  - The **location whose bearing is closest to the direction the device is currently facing** is indicated with a **white ring** around its icon. If two locations are equidistant in bearing, the closer one (by distance) is preferred.
-  - If the nearest location is also the one the user is facing, only the **orange-red ring** is shown (orange-red takes priority over white).
-- **The distance to the facing location** is displayed in the **centre of the screen** in kilometres, to one decimal place (e.g. "1.4 km"). Font should be large, legible, and white.
+- **Icon scaling** distinguishes the highlighted location: all icons render at **75% size** by default. The **highlighted location** (the one closest to the direction the device is facing, or the most recently tapped location) renders at **100% size**. This creates a clear visual focus without rings or borders.
+- **Nearest indicator:** The **closest location by distance** is marked with a small **orange-red dot** at a **fixed radial distance from the centre** of the dial, along the same bearing as the location's icon. The dot sits on a concentric circle inside the icon track, so it remains positionally stable as the compass rotates. This dot is always visible regardless of device orientation or which location is highlighted.
+- **The name and distance of the highlighted location** are displayed in the **centre of the screen**. The location name appears above the distance readout. Distance is shown in kilometres to one decimal place (e.g. "1.4 km") or in metres when under 1km. Font should be large, legible, and white.
 - **Acceptance criteria:** Bearings are accurate to within ±3° of the actual geographic bearing. Highlight updates smoothly with device rotation.
 
 #### Empty State
