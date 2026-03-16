@@ -9,19 +9,17 @@ final class NataSearchService: ObservableObject {
 
     private let searchRadius: CLLocationDistance = 2000 // 2km
 
-    // Tier 1: Explicitly nata-related
     private let nataTier1Keywords = [
         "pastel de nata",
         "pastéis de nata",
+        "custard tart",
         "pastelaria",
         "tarte de nata"
     ]
 
-    // Tier 2: Cafés that might serve nata
+    // Tier 2: Cafés
     private let cafeKeywords = [
-        "custard tart",
-        "egg tart",
-        "patisserie"
+        "cafe"
     ]
 
     // Tier 3: Bakeries
@@ -75,16 +73,12 @@ final class NataSearchService: ObservableObject {
         }
 
         let nataResults = deduplicated.filter { $0.tier == .nata }.sorted(by: sortByDistance)
-        let cafeResults = deduplicated.filter { $0.tier == .cafe }.sorted(by: sortByDistance)
-        let bakeryResults = deduplicated.filter { $0.tier == .bakery }.sorted(by: sortByDistance)
+        let remaining = deduplicated.filter { $0.tier != .nata }.sorted(by: sortByDistance)
 
         let maxResults = 5
         var selected = Array(nataResults.prefix(maxResults))
         if selected.count < maxResults {
-            selected.append(contentsOf: cafeResults.prefix(maxResults - selected.count))
-        }
-        if selected.count < maxResults {
-            selected.append(contentsOf: bakeryResults.prefix(maxResults - selected.count))
+            selected.append(contentsOf: remaining.prefix(maxResults - selected.count))
         }
 
         // Update bearing and distance for each result

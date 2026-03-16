@@ -80,7 +80,7 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 - **Searches repeat automatically every 2 minutes** while the app is in the foreground.
 - The search uses the device's location (Core Location, "When In Use" permission) and a Points of Interest / Places API query (e.g. Google Places, Apple MapKit, or Foursquare) using a **multilingual keyword set** to maximise global coverage: "pastel de nata", "pastéis de nata", "pastelaria", "custard tart", "egg tart", "tarte de nata".
 - Results are returned in **three tiers**: (1) places explicitly associated with Pastéis de Nata (🥧 nata icon), (2) cafés or patisseries that might serve nata (☕ espresso cup icon), and (3) general bakeries (🥐 croissant icon). This allows the app to show something useful even in cities with sparse data, while being honest about confidence.
-- **A maximum of 5 locations are displayed** on the dial at any one time, selected using a **smart fill-to-5** strategy: all nata results (up to 5) are included first, then the closest cafés fill remaining slots, then bakeries. This prioritises confirmed nata locations while still providing fallbacks.
+- **A maximum of 5 locations are displayed** on the dial at any one time, selected using a **smart fill-to-5** strategy: all nata results (up to 5) are included first, then remaining slots are filled with the closest non-nata locations by distance (cafés and bakeries interleaved by proximity). This prioritises confirmed nata locations while ensuring the closest alternatives always appear.
 - **Acceptance criteria:** Results are displayed within 3 seconds of a search completing on a standard LTE connection. Tier classification is determined before rendering.
 
 #### Location Markers on the Dial
@@ -169,7 +169,7 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 | # | Decision |
 |---|---|
 | 1 | **Three-tier fuzzy matching.** Nata locations shown with 🥧, cafés/patisseries with ☕, and bakeries with 🥐 — rather than excluded. |
-| 2 | **Max 5 locations** displayed on the dial at any time, using smart fill-to-5 (nata first, then cafés, then bakeries). |
+| 2 | **Max 5 locations** displayed on the dial at any time, using smart fill-to-5 (nata first, then closest cafés/bakeries by distance). |
 | 3 | **No automatic radius expansion** on empty results. Pure sad face. |
 | 4 | **Free app, no monetisation** in v1. API cost is an accepted running expense. |
 | 5 | **Apple Watch shows a full compass dial** and operates in companion mode (iPhone required nearby) in v1. |
