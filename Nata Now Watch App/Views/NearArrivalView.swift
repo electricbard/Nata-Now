@@ -5,7 +5,13 @@ struct NearArrivalView: View {
     @State private var isPulsing = false
 
     var body: some View {
-        Text(tier == .nata ? "🥧" : "☕")
+        Text({
+                switch tier {
+                case .nata: return "🥧"
+                case .cafe: return "☕"
+                case .bakery: return "🥐"
+                }
+            }())
             .font(.system(size: 40))
             .scaleEffect(isPulsing ? 1.15 : 1.0)
             .animation(

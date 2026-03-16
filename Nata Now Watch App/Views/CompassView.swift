@@ -160,7 +160,12 @@ struct CompassDial: View {
                 context.fill(Path(ellipseIn: bgRect), with: .color(.black))
 
                 // Emoji
-                let emoji = location.tier == .nata ? "🥧" : "☕"
+                let emoji: String
+                switch location.tier {
+                case .nata: emoji = "🥧"
+                case .cafe: emoji = "☕"
+                case .bakery: emoji = "🥐"
+                }
                 let emojiText = Text(emoji).font(.system(size: emojiSize))
                 context.draw(context.resolve(emojiText), at: markerCenter)
             }

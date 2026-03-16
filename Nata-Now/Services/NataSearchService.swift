@@ -16,10 +16,15 @@ final class NataSearchService: ObservableObject {
         "tarte de nata"
     ]
 
-    private let nataTier2Keywords = [
+    // Tier 2: Cafés that might serve nata
+    private let cafeKeywords = [
         "custard tart",
         "egg tart",
-        "patisserie",
+        "patisserie"
+    ]
+
+    // Tier 3: Bakeries
+    private let bakeryKeywords = [
         "bakery"
     ]
 
@@ -34,8 +39,14 @@ final class NataSearchService: ObservableObject {
             allResults.append(contentsOf: results)
         }
 
-        for keyword in nataTier2Keywords {
+        for keyword in cafeKeywords {
             let results = await performSearch(keyword: keyword, near: location, tier: .cafe)
+            allResults.append(contentsOf: results)
+        }
+
+        // Search bakery keywords
+        for keyword in bakeryKeywords {
+            let results = await performSearch(keyword: keyword, near: location, tier: .bakery)
             allResults.append(contentsOf: results)
         }
 
@@ -52,14 +63,28 @@ final class NataSearchService: ObservableObject {
             }
         }
 
+        // Smart fill-to-5: prioritise nata, then cafes, then bakeries
         let userLocation = location
-        deduplicated.sort { a, b in
+        let sortByDistance: (NataLocation, NataLocation) -> Bool = { a, b in
             let distA = userLocation.distance(from: CLLocation(latitude: a.coordinate.latitude, longitude: a.coordinate.longitude))
             let distB = userLocation.distance(from: CLLocation(latitude: b.coordinate.latitude, longitude: b.coordinate.longitude))
             return distA < distB
         }
 
-        locations = Array(deduplicated.prefix(6)).map { loc in
+        let nataResults = deduplicated.filter { $0.tier == .nata }.sorted(by: sortByDistance)
+        let cafeResults = deduplicated.filter { $0.tier == .cafe }.sorted(by: sortByDistance)
+        let bakeryResults = deduplicated.filter { $0.tier == .bakery }.sorted(by: sortByDistance)
+
+        let maxResults = 5
+        var selected = Array(nataResults.prefix(maxResults))
+        if selected.count < maxResults {
+            selected.append(contentsOf: cafeResults.prefix(maxResults - selected.count))
+        }
+        if selected.count < maxResults {
+            selected.append(contentsOf: bakeryResults.prefix(maxResults - selected.count))
+        }
+
+        locations = selected.map { loc in
             var updated = loc
             updated.distance = userLocation.distance(from: CLLocation(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude))
             updated.bearing = bearing(from: userLocation.coordinate, to: loc.coordinate)

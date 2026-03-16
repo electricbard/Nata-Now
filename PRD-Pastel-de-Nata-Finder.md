@@ -79,13 +79,13 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 - **On app launch**, a search is performed for establishments serving Pastéis de Nata within a **2km radius** of the user's current location.
 - **Searches repeat automatically every 2 minutes** while the app is in the foreground.
 - The search uses the device's location (Core Location, "When In Use" permission) and a Points of Interest / Places API query (e.g. Google Places, Apple MapKit, or Foursquare) using a **multilingual keyword set** to maximise global coverage: "pastel de nata", "pastéis de nata", "pastelaria", "custard tart", "egg tart", "tarte de nata".
-- Results are returned in **two tiers**: (1) places explicitly associated with Pastéis de Nata, and (2) general cafés or patisseries where no nata-specific match was found. Tier 1 results are displayed with the **nata icon**; tier 2 results are displayed with an **espresso cup icon** to signal a fuzzier match. This allows the app to show something useful even in cities with sparse data, while being honest about confidence.
-- **A maximum of 6 locations are displayed** on the dial at any one time — the 6 closest by distance, regardless of tier. This prevents dial clutter when many results are returned.
+- Results are returned in **three tiers**: (1) places explicitly associated with Pastéis de Nata (🥧 nata icon), (2) cafés or patisseries that might serve nata (☕ espresso cup icon), and (3) general bakeries (🥐 croissant icon). This allows the app to show something useful even in cities with sparse data, while being honest about confidence.
+- **A maximum of 5 locations are displayed** on the dial at any one time, selected using a **smart fill-to-5** strategy: all nata results (up to 5) are included first, then the closest cafés fill remaining slots, then bakeries. This prioritises confirmed nata locations while still providing fallbacks.
 - **Acceptance criteria:** Results are displayed within 3 seconds of a search completing on a standard LTE connection. Tier classification is determined before rendering.
 
 #### Location Markers on the Dial
 
-- Up to **6 locations** (the closest by distance) are shown on the dial simultaneously. Each is represented by an icon placed at the bearing corresponding to that location from the user's current position: a **Pastel de Nata image** for confirmed nata-serving locations, or an **espresso cup image** for fuzzier café/patisserie matches.
+- Up to **5 locations** are shown on the dial simultaneously, selected by the smart fill-to-5 strategy. Each is represented by an icon placed at the bearing corresponding to that location from the user's current position: a **🥧 nata icon** for confirmed nata-serving locations, a **☕ café icon** for patisseries/cafés, or a **🥐 bakery icon** for general bakeries.
 - **Icons occlude ticks** — any tick mark that would visually overlap with or sit within 5° of an icon is hidden, preventing clutter.
 - **Icon scaling** distinguishes the highlighted location: all icons render at **75% size** by default. The **highlighted location** (the one closest to the direction the device is facing, or the most recently tapped location) renders at **100% size**. This creates a clear visual focus without rings or borders.
 - **Nearest indicator:** The **closest location by distance** is marked with a small **orange-red dot** at a **fixed radial distance from the centre** of the dial, along the same bearing as the location's icon. The dot sits on a concentric circle inside the icon track, so it remains positionally stable as the compass rotates. This dot is always visible regardless of device orientation or which location is highlighted.
@@ -94,13 +94,13 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 
 #### Empty State
 
-- If **no locations are found** within 2km (neither nata nor café tier), a **sad face** (emoji or illustrated icon) is displayed in the centre of the dial in place of the distance readout. The app does not attempt to expand the search radius automatically — the empty state is presented honestly.
+- If **no locations are found** within 2km (no nata, café, or bakery results), a **sad face** (emoji or illustrated icon) is displayed in the centre of the dial in place of the distance readout. The app does not attempt to expand the search radius automatically — the empty state is presented honestly.
 - **Acceptance criteria:** Sad face appears within 1 second of a search returning zero results.
 
 #### Near-Arrival Experience
 
 - When the user is **within 100m** of the highlighted location:
-  - The distance readout is **replaced by a large icon** in the centre of the screen — a **Pastel de Nata image** if the highlighted location is a confirmed nata match, or an **espresso cup image** if it is a fuzzy café match.
+  - The distance readout is **replaced by a large icon** in the centre of the screen — a **🥧 nata icon** if the highlighted location is a confirmed nata match, a **☕ café icon** if it is a café/patisserie, or a **🥐 bakery icon** if it is a general bakery.
   - The image **throbs** (a looping pulse animation — scale up ~115% and back, ~1.2s cycle) to draw the user's attention.
   - The throbbing continues until the user moves beyond 100m or the app is closed.
 - **Acceptance criteria:** Transition from distance readout to throbbing icon occurs within 1 GPS update cycle of crossing the 100m threshold. Animation runs at ≥30fps.
@@ -111,7 +111,7 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 
 - **Haptic feedback** on iPhone when the highlighted location changes (a short tap) and when the user enters the 100m near-arrival zone (a distinct double-tap).
 - **Apple Watch complication** showing the bearing arrow and distance to the nearest location, glanceable from the watch face.
-- **Dynamic search radius** — if fewer than 2 results are found at 2km (across both tiers), automatically retry at 5km and indicate the expanded radius with a subtle UI label (e.g. "Searching 5km").
+- **Dynamic search radius** — if fewer than 2 results are found at 2km (across all three tiers), automatically retry at 5km and indicate the expanded radius with a subtle UI label (e.g. "Searching 5km").
 - **Location name tooltip** — tapping a nata image on the dial (iPhone only) reveals the establishment name in a small floating label.
 - **Accessibility:** VoiceOver support announcing the name and distance of the highlighted location when it changes.
 
@@ -168,8 +168,8 @@ Pastéis de Nata have spread far beyond Portugal — they're now served in baker
 
 | # | Decision |
 |---|---|
-| 1 | **Fuzzy matching is acceptable.** Cafés and patisseries without a confirmed nata match are shown with an espresso cup icon rather than excluded. |
-| 2 | **Max 6 locations** displayed on the dial at any time (closest 6 by distance). |
+| 1 | **Three-tier fuzzy matching.** Nata locations shown with 🥧, cafés/patisseries with ☕, and bakeries with 🥐 — rather than excluded. |
+| 2 | **Max 5 locations** displayed on the dial at any time, using smart fill-to-5 (nata first, then cafés, then bakeries). |
 | 3 | **No automatic radius expansion** on empty results. Pure sad face. |
 | 4 | **Free app, no monetisation** in v1. API cost is an accepted running expense. |
 | 5 | **Apple Watch shows a full compass dial** and operates in companion mode (iPhone required nearby) in v1. |

@@ -4,6 +4,7 @@ import CoreLocation
 enum SearchTier: Sendable {
     case nata
     case cafe
+    case bakery
 }
 
 struct NataLocation: Identifiable, Sendable {
